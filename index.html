@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aureus Antiquus – Edizione Migliorata</title>
+  <style>
+    /* Reset e font Google */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Cinzel', serif;
+    }
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+
+    body {
+      min-height: 100vh;
+      background: #1a120b;
+      color: #e0d5c1;
+      overflow-x: hidden;
+    }
+
+    /* Effetto lanterna (segue il mouse) */
+    #lantern {
+      position: fixed;
+      pointer-events: none;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,215,0,0.12) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      mix-blend-mode: screen;
+      transition: width 0.3s, height 0.3s;
+    }
+    #lantern.active {
+      width: 500px;
+      height: 500px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(180deg, #2a1f14 0%, transparent 100%);
+    }
+    header h1 {
+      font-size: 2.8rem;
+      letter-spacing: 0.2em;
+      text-shadow: 0 0 20px #b8860b, 0 0 40px #8b6508;
+      animation: glitch 3s infinite;
+    }
+    header p {
+      font-size: 1rem;
+      opacity: 0.8;
+      margin-top: 0.3rem;
+    }
+    @keyframes glitch {
+      0%, 100% { text-shadow: 2px 0 0 #b8860b, -2px 0 0 #8b6508; }
+      50% { text-shadow: -2px 0 0 #b8860b, 2px 0 0 #8b6508; }
+    }
+
+    /* Barra del carrello */
+    #cart-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #2f2318;
+      padding: 0.6rem 2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 1.5rem;
+      border-bottom: 1px solid #705a3c;
+    }
+    #cart-bar span {
+      font-size: 1.2rem;
+    }
+    #cart-count {
+      background: #b8860b;
+      color: #1a120b;
+      padding: 0.2rem 0.6rem;
+      border-radius: 50%;
+      font-weight: bold;
+    }
+
+    /* Filtri per epoca */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.8rem;
+      padding: 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .filter-btn {
+      background: transparent;
+      border: 2px solid #705a3c;
+      color: #e0d5c1;
+      padding: 0.5rem 1.5rem;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: #b8860b;
+      color: #1a120b;
+      border-color: #b8860b;
+    }
+
+    /* Griglia monete */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 2rem;
+      padding: 1rem 3rem 3rem;
+      position: relative;
+      z-index: 1;
+    }
+    .coin-card {
+      background: #2f2318;
+      border: 2px solid #705a3c;
+      border-radius: 20px;
+      padding: 1.2rem 1rem 1.5rem;
+      text-align: center;
+      transition: transform 0.5s, box-shadow 0.5s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .coin-card:hover {
+      transform: translateY(-12px) scale(1.02);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 30px rgba(184,134,11,0.5);
+    }
+    .coin-card .image-wrapper {
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 0.5rem;
+      perspective: 800px;
+    }
+    .coin-card .image-wrapper .coin-face {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 5px solid #b8860b;
+      transition: transform 0.8s ease, filter 0.5s;
+      filter: sepia(0.3) contrast(0.85) brightness(0.9);
+      /* Ogni moneta avrà uno sfondo personalizzato via JS o CSS */
+      background: radial-gradient(circle at 30% 30%, #c8a86e, #8b6f3c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: #2a1f14;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(255,215,0,0.4);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+    }
+    .coin-card:hover .image-wrapper .coin-face {
+      transform: rotateY(360deg);
+      filter: sepia(0) contrast(1.1) brightness(1.1) drop-shadow(0 0 15px gold);
+    }
+    /* Patina animata (overlay di texture) */
+    .coin-card::before {
+      content: '';
+      position: absolute;
+      top: -2px; left: -2px; right: -2px; bottom: -2px;
+      background: repeating-conic-gradient(
+        transparent 0deg,
+        rgba(120,90,40,0.05) 10deg,
+        transparent 20deg
+      );
+      pointer-events: none;
+      z-index: 2;
+      animation: patina 8s linear infinite;
+    }
+    @keyframes patina {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .coin-card h3 {
+      font-size: 1.1rem;
+      color: #f0d9b5;
+    }
+    .coin-card .era {
+      display: inline-block;
+      background: #4a3928;
+      padding: 0.2rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    .coin-card .price {
+      font-size: 1.3rem;
+      color: #ffd700;
+      font-weight: bold;
+      margin: 0.2rem 0;
+    }
+    .coin-card .add-cart {
+      background: #b8860b;
+      border: none;
+      color: #1a120b;
+      padding: 0.5rem 1.2rem;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+    }
+    .coin-card .add-cart:hover {
+      background: #d4a017;
+      transform: scale(1.05);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: #7a6b56;
+      border-top: 1px solid #3a2a1a;
+      margin-top: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .grid { padding: 1rem; gap: 1rem; }
+      header h1 { font-size: 2rem; }
+      #cart-bar { padding: 0.4rem 1rem; }
+      .filters { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Lanterna -->
+  <div id="lantern"></div>
+
+  <!-- Header -->
+  <header>
+    <h1>AUREUS ANTIQUUS</h1>
+    <p>Il fascino dell’antichità, custodito nel palmo della tua mano</p>
+  </header>
+
+  <!-- Barra carrello -->
+  <div id="cart-bar">
+    <span>🛒 Carrello: <span id="cart-count">0</span></span>
+  </div>
+
+  <!-- Filtri per epoca -->
+  <div class="filters">
+    <button class="filter-btn active" data-era="all">Tutte</button>
+    <button class="filter-btn" data-era="repubblica">Repubblica</button>
+    <button class="filter-btn" data-era="impero">Impero</button>
+    <button class="filter-btn" data-era="grecia">Grecia</button>
+    <button class="filter-btn" data-era="bizantino">Bizantino</button>
+  </div>
+
+  <!-- Griglia monete (i dati vengono popolati via JS) -->
+  <div class="grid" id="catalog"></div>
+
+  <footer>
+    <p>© 2025 Aureus Antiquus – Ogni moneta è certificata ed autentica.</p>
+  </footer>
+
+  <script>
+    // ============================
+    // DATI ESEMPI (monete realistiche)
+    // ============================
+    const coins = [
+      { id: 1, name: "Denario – Giulia", era: "repubblica", price: 1200, symbol: "D" },
+      { id: 2, name: "Sesterzio – Traiano", era: "impero", price: 2800, symbol: "S" },
+      { id: 3, name: "Tetradramma – Atene", era: "grecia", price: 3500, symbol: "T" },
+      { id: 4, name: "Solido – Giustiniano", era: "bizantino", price: 5100, symbol: "A" },
+      { id: 5, name: "Aureo – Augusto", era: "impero", price: 8800, symbol: "A" },
+      { id: 6, name: "Didramma – Corinto", era: "grecia", price: 1900, symbol: "D" },
+      { id: 7, name: "Follis – Costantino", era: "bizantino", price: 950, symbol: "F" },
+      { id: 8, name: "Vittoriato – Repubblicano", era: "repubblica", price: 750, symbol: "V" }
+    ];
+
+    // ============================
+    // GENERAZIONE CATALOGO
+    // ============================
+    const catalog = document.getElementById('catalog');
+    const cartCount = document.getElementById('cart-count');
+    let cart = JSON.parse(sessionStorage.getItem('aureusCart')) || [];
+
+    function updateCartUI() {
+      cartCount.textContent = cart.length;
+      sessionStorage.setItem('aureusCart', JSON.stringify(cart));
+    }
+
+    function renderCoins(filter = 'all') {
+      catalog.innerHTML = '';
+      const filtered = filter === 'all' ? coins : coins.filter(c => c.era === filter);
+      filtered.forEach(coin => {
+        const card = document.createElement('div');
+        card.className = 'coin-card';
+        card.setAttribute('data-era', coin.era);
+        card.innerHTML = `
+          <div class="image-wrapper">
+            <div class="coin-face" style="background: radial-gradient(circle at 30% 30%, #c8a86e, #6b4f2a);">${coin.symbol}</div>
+          </div>
+          <h3>${coin.name}</h3>
+          <span class="era">${coin.era.charAt(0).toUpperCase() + coin.era.slice(1)}</span>
+          <p class="price">€ ${coin.price.toLocaleString()}</p>
+          <button class="add-cart" data-id="${coin.id}">Aggiungi al carrello</button>
+        `;
+        catalog.appendChild(card);
+      });
+
+      // Assegna eventi ai bottoni "Aggiungi al carrello"
+      document.querySelectorAll('.add-cart').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const id = parseInt(this.dataset.id);
+          const coin = coins.find(c => c.id === id);
+          if (coin) {
+            cart.push(coin);
+            updateCartUI();
+            alert(`"${coin.name}" aggiunta al carrello!`);
+          }
+        });
+      });
+    }
+
+    // ============================
+    // FILTRI
+    // ============================
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const era = this.dataset.era;
+        renderCoins(era);
+      });
+    });
+
+    // ============================
+    // EFFETTO LANTERNA (migliorato)
+    // ============================
+    const lantern = document.getElementById('lantern');
+    document.addEventListener('mousemove', (e) => {
+      lantern.style.left = e.clientX + 'px';
+      lantern.style.top = e.clientY + 'px';
+    });
+    // Ingrandisce la lanterna quando si passa su una card
+    document.querySelectorAll('.coin-card').forEach(card => {
+      card.addEventListener('mouseenter', () => lantern.classList.add('active'));
+      card.addEventListener('mouseleave', () => lantern.classList.remove('active'));
+    });
+
+    // ============================
+    // SUONO DI MONETA (Web Audio API)
+    // ============================
+    let audioCtx = null;
+
+    function playCoinSound() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      // Crea un breve suono di tintinnio
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(1600, audioCtx.currentTime + 0.1);
+
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.2);
+    }
+
+    // Aggiunge suono all'hover su ogni card (usando delegazione)
+    catalog.addEventListener('mouseover', function(e) {
+      const card = e.target.closest('.coin-card');
+      if (card) {
+        playCoinSound();
+      }
+    });
+
+    // ============================
+    // SUPPORTO TOUCH (rotazione su mobile)
+    // ============================
+    // Su dispositivi touch, la rotazione 3D avviene al tap (invece che hover)
+    if ('ontouchstart' in window) {
+      document.querySelectorAll('.coin-card').forEach(card => {
+        card.addEventListener('touchstart', function() {
+          const face = this.querySelector('.coin-face');
+          if (face.style.transform.includes('rotateY')) {
+            face.style.transform = 'rotateY(0deg)';
+          } else {
+            face.style.transform = 'rotateY(360deg)';
+          }
+        });
+      });
+    }
+
+    // ============================
+    // INIZIALIZZAZIONE
+    // ============================
+    renderCoins('all');
+    updateCartUI();
+
+    // (Opzionale) svuota carrello con doppio clic sul contatore
+    document.getElementById('cart-count').addEventListener('dblclick', function() {
+      if (confirm('Svuotare il carrello?')) {
+        cart = [];
+        updateCartUI();
+      }
+    });
+  </script>
+</body>
+</html>
